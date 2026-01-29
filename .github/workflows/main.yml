@@ -2,7 +2,8 @@ name: ThingsBoard CI
 
 on:
   push:
-    branches: [ "release-4.2", "main" ]
+    branches: 
+      - master
   pull_request:
 
 jobs:
