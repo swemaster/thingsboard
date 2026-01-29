@@ -1,0 +1,67 @@
+name: ThingsBoard CI
+
+on:
+  push:
+    branches: [ "release-4.2", "main" ]
+  pull_request:
+
+jobs:
+  build-test-run:
+    runs-on: ubuntu-24.04
+
+    services:
+      docker:
+        image: docker:27-dind
+        options: --privileged
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify Java & Maven
+        run: |
+          java -version
+          mvn -version
+
+      - name: Build and run unit tests
+        run: |
+          mvn clean install
+
+      - name: Build ThingsBoard Docker image
+        run: |
+          mvn clean install -DskipTests -Ddockerfile.skip=false
+
+      - name: Start ThingsBoard (Docker)
+        run: |
+          docker images | grep thingsboard
+          docker run -d \
+            --name tb-test \
+            -p 8080:8080 \
+            thingsboard/tb-postgres
+
+      - name: Check ThingsBoard is up
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080; then
+              echo "ThingsBoard is up"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ThingsBoard failed to start"
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f tb-test || true
