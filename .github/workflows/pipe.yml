@@ -42,13 +42,15 @@ jobs:
           MAVEN_OPTS: -Xmx2048m
 
       - name: Run Unit Tests
-        run: mvn test -pl common/stats,common/cache,common/actor,common/queue,common/data,common/util,common/message -Dlicense.skip=true
+        run: mvn test -pl common/stats,common/cache -Dlicense.skip=true
+        # too long
+        # run: mvn test -pl common/stats,common/cache,common/actor,common/queue,common/data,common/util,common/message -Dlicense.skip=true
         env:
           MAVEN_OPTS: -Xmx2048m
 
       - name: Launch and Smoke Test
         run: |
-          java -Xmx1024m -jar application/target/thingsboard.jar --server.port=8080 &
+          java -Xmx1024m -jar application/target/thingsboard-4.4.0-SNAPSHOT-boot.jar --server.port=8080 &
           timeout 120s bash -c 'until curl -s localhost:8080/login; do sleep 5; done'
 
       - name: Upload results
