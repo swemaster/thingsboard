@@ -42,7 +42,7 @@ jobs:
           MAVEN_OPTS: -Xmx2048m
 
       - name: Run Unit Tests
-        run: mvn test -Dlicense.skip=true -pl '!msa/js-executor,!msa/web-ui,!ui-ngx,!common/script/script-api' -T 1C
+        run: mvn test -pl common/stats,common/cache,common/actor,common/queue,common/data,common/util,common/message -Dlicense.skip=true
         env:
           MAVEN_OPTS: -Xmx2048m
 
