@@ -25,6 +25,22 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: thingsboard
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,9 +64,26 @@ jobs:
         env:
           MAVEN_OPTS: -Xmx2048m
 
+      - name: Initialize Database
+        run: |
+          java -cp application/target/thingsboard-4.4.0-SNAPSHOT-boot.jar \
+            -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
+            -Dinstall.data_dir=application/target/data \
+            -Dinstall.load_demo=false \
+            -Dspring.jpa.hibernate.ddl-auto=none \
+            -Dinstall.upgrade=false \
+            -Dspring.datasource.url=jdbc:postgresql://localhost:5432/thingsboard \
+            -Dspring.datasource.username=postgres \
+            -Dspring.datasource.password=postgres \
+            org.springframework.boot.loader.launch.PropertiesLauncher
+
       - name: Launch and Smoke Test
         run: |
-          java -Xmx1024m -jar application/target/thingsboard-4.4.0-SNAPSHOT-boot.jar --server.port=8080 &
+          java -Xmx1024m -jar application/target/thingsboard-4.4.0-SNAPSHOT-boot.jar \
+            --spring.datasource.url=jdbc:postgresql://localhost:5432/thingsboard \
+            --spring.datasource.username=postgres \
+            --spring.datasource.password=postgres \
+            --server.port=8080 &
           timeout 120s bash -c 'until curl -s localhost:8080/login; do sleep 5; done'
 
       - name: Upload results
