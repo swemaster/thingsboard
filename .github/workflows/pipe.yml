@@ -24,7 +24,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,12 +37,12 @@ jobs:
           cache: maven
 
       - name: Quick Install
-        run: mvn clean install -DskipTests -Dlicense.skip=true -Dskip.npm=true -Dskip.docker=true -T 1C
+        run: mvn clean install -DskipTests -Dlicense.skip=true -Dskip.npm=true -Dskip.docker=true -pl '!msa/js-executor,!msa/web-ui,!ui-ngx' -am -T 1C
         env:
           MAVEN_OPTS: -Xmx2048m
 
       - name: Run Unit Tests
-        run: mvn test -Dlicense.skip=true -T 1C
+        run: mvn test -Dlicense.skip=true -pl '!msa/js-executor,!msa/web-ui,!ui-ngx' -T 1C
         env:
           MAVEN_OPTS: -Xmx2048m
 
@@ -56,4 +56,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: '**/target/surefire-reports/*.xml'
+          path: "**/target/surefire-reports/*.xml"
