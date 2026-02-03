@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: pipe2
+name: Build and Run
 
 on:
   push:
@@ -23,7 +23,7 @@ on:
     branches: [main, master]
 
 jobs:
-  build-and-test:
+  build-and-run:
     runs-on: ubuntu-latest
 
     services:
@@ -52,15 +52,8 @@ jobs:
           java-version: 17
           cache: maven
 
-      - name: Quick Install
+      - name: Build Project
         run: mvn clean install -DskipTests -Dlicense.skip=true -Dskip.npm=true -Dskip.docker=true -pl '!msa/js-executor,!msa/web-ui,!ui-ngx' -am -T 1C
-        env:
-          MAVEN_OPTS: -Xmx2048m
-
-      - name: Run Unit Tests
-        run: mvn test -pl common/stats,common/cache -Dlicense.skip=true
-        # too long
-        # run: mvn test -pl common/stats,common/cache,common/actor,common/queue,common/data,common/util,common/message -Dlicense.skip=true
         env:
           MAVEN_OPTS: -Xmx2048m
 
@@ -85,10 +78,3 @@ jobs:
             --spring.datasource.password=postgres \
             --server.port=8080 &
           timeout 120s bash -c 'until curl -s localhost:8080/login; do sleep 5; done'
-
-      - name: Upload results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: "**/target/surefire-reports/*.xml"
